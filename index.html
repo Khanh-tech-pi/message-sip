@@ -2,32 +2,40 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>mesSIP.com</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jssip/3.9.1/jssip.min.js"></script>
+    <title>mesSIP.com - Lite</title>
+    <script src="https://cdn.jsdelivr.net/npm/jssip@3.9.1/dist/jssip.min.js"></script>
 </head>
-<body style="background: #1a1a1a; color: white; font-family: sans-serif; text-align: center; padding: 20px;">
+<body style="background: #121212; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
 
-    <div style="max-width: 400px; margin: auto; background: #222; padding: 20px; border-radius: 15px; border: 2px solid #4285f4;">
-        <h2 style="color: #4285f4;">mesSIP.com</h2>
-        <div id="status" style="color: #f4b400; font-weight: bold; margin-bottom: 20px;">Chưa đăng nhập</div>
+    <div style="width: 350px; background: #1e1e1e; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; text-align: center;">
+        <h1 style="color: #4285f4; margin-top: 0;">mesSIP</h1>
+        <div id="status" style="background: #333; padding: 10px; border-radius: 10px; margin-bottom: 20px; color: #f4b400;">Chờ đăng nhập...</div>
 
-        <input type="text" id="sip_user" placeholder="Tên Linphone" style="width: 90%; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-        <input type="password" id="sip_pass" placeholder="Mật khẩu" style="width: 90%; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+        <input type="text" id="sip_user" placeholder="Tên Linphone (vd: galaxya10vn)" style="width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; background: #2a2a2a; color: white; box-sizing: border-box;">
+        
+        <input type="password" id="sip_pass" placeholder="Mật khẩu Linphone" style="width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: none; background: #2a2a2a; color: white; box-sizing: border-box;">
 
-        <button onclick="startSIP()" style="width: 95%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 25px; cursor: pointer;">Đăng nhập mesSIP</button>
+        <button onclick="startSIP()" id="loginBtn" style="width: 100%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">ĐĂNG NHẬP</button>
 
-        <hr style="margin: 20px 0; border: 0.1px solid #444;">
+        <hr style="border: 0.5px solid #333; margin: 25px 0;">
 
-        <input type="text" id="target" placeholder="Gọi tới" style="width: 90%; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
-        <button onclick="callAudio()" style="width: 45%; padding: 10px; background: #34a853; color: white; border: none; border-radius: 5px;">📞 Gọi</button>
+        <input type="text" id="target" placeholder="Gọi tới (vd: 101@192.168.x.x)" style="width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 8px; border: none; background: #2a2a2a; color: white; box-sizing: border-box;">
+
+        <button onclick="callAudio()" style="width: 100%; padding: 12px; background: #34a853; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">📞 GỌI AUDIO</button>
+        
+        <audio id="remoteAudio" autoplay></audio>
     </div>
 
     <script>
     var ua;
     function startSIP() {
-        // Kiểm tra xem JsSIP đã load chưa
+        // Kiểm tra xem JsSIP đã sẵn sàng chưa
         if (typeof JsSIP === "undefined") {
-            alert("Lỗi: Thư viện chưa load xong, hãy đợi 5 giây hoặc F5!");
+            // Nếu vẫn lỗi, thử load lại thư viện lần nữa từ link dự phòng
+            var script = document.createElement('script');
+            script.src = "https://unpkg.com/jssip@3.9.1/dist/jssip.min.js";
+            document.head.appendChild(script);
+            alert("Đang tải lại 'bộ não'... đợi 3 giây rồi ấn lại nhé Khánh!");
             return;
         }
 
@@ -45,6 +53,38 @@
         ua.start();
 
         ua.on('registered', () => {
+            document.getElementById('status').innerText = "ONLINE ✅";
+            document.getElementById('status').style.color = "#34a853";
+            document.getElementById('loginBtn').style.background = "#555";
+            document.getElementById('loginBtn').innerText = "ĐÃ KẾT NỐI";
+        });
+
+        ua.on('registrationFailed', (e) => {
+            document.getElementById('status').innerText = "SAI PASS/USER ❌";
+            console.error("Lỗi:", e.cause);
+        });
+    }
+
+    function callAudio() {
+        if (!ua || !ua.isRegistered()) { alert("Chưa Online mà!"); return; }
+        var dest = document.getElementById('target').value;
+        
+        var options = {
+            mediaConstraints: { audio: true, video: false },
+            pcConfig: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+        };
+        
+        var session = ua.call(dest, options);
+
+        session.on('peerconnection', (data) => {
+            data.peerconnection.onaddstream = (e) => {
+                document.getElementById('remoteAudio').srcObject = e.stream;
+            };
+        });
+    }
+    </script>
+</body>
+</html>a.on('registered', () => {
             document.getElementById('status').innerText = "Đã Online ✅";
             document.getElementById('status').style.color = "#34a853";
         });
