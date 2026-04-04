@@ -1,0 +1,47 @@
+<div style="background: #202124; color: white; padding: 20px; border-radius: 15px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; border: 2px solid #4285f4;">
+    <h2 style="color: #4285f4; margin-bottom: 5px;">mesSIP.com</h2>
+    <p style="font-size: 12px; color: #9aa0a6;">Giao thức SIP Lite cho Pháp sư</p>
+    
+    <div id="status" style="color: #f4b400; margin: 15px 0; font-weight: bold;">Chưa đăng nhập</div>
+
+    <input type="text" id="sip_user" placeholder="Tên Linphone (vd: khanh123)" style="width: 85%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #5f6368; background: #303134; color: white;">
+    
+    <input type="password" id="sip_pass" placeholder="Mật khẩu Linphone" style="width: 85%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #5f6368; background: #303134; color: white;">
+
+    <button onclick="startSIP()" style="width: 90%; padding: 12px; background: #4285f4; color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; margin-bottom: 10px;">Đăng nhập mesSIP</button>
+
+    <hr style="border: 0.5px solid #5f6368; margin: 20px 0;">
+
+    <input type="text" id="target" placeholder="Gọi tới (vd: a14@sip.linphone.org)" style="width: 85%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #5f6368; background: #303134; color: white;">
+
+    <div style="display: flex; justify-content: space-around;">
+        <button onclick="callAudio()" style="padding: 10px 20px; background: #34a853; color: white; border: none; border-radius: 5px; cursor: pointer;">📞 Gọi</button>
+        <button onclick="sendMsg()" style="padding: 10px 20px; background: #ea4335; color: white; border: none; border-radius: 5px; cursor: pointer;">💬 Chat</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/jssip@3.9.1/dist/jssip.min.js"></script>
+<script>
+    var ua;
+    function startSIP() {
+        var user = document.getElementById('sip_user').value;
+        var pass = document.getElementById('sip_pass').value;
+        var socket = new JsSIP.WebSocketInterface('wss://sip.linphone.org:4443');
+        var config = { sockets: [socket], uri: 'sip:'+user+'@sip.linphone.org', password: pass };
+        ua = new JsSIP.UA(config);
+        ua.start();
+        ua.on('registered', () => { document.getElementById('status').innerText = "Đã Online ✅"; document.getElementById('status').style.color = "#34a853"; });
+        ua.on('registrationFailed', () => { document.getElementById('status').innerText = "Lỗi (503/404) ❌"; document.getElementById('status').style.color = "#ea4335"; });
+    }
+
+    function callAudio() {
+        var dest = document.getElementById('target').value;
+        ua.call(dest, { mediaConstraints: { audio: true, video: false } });
+    }
+
+    function sendMsg() {
+        var dest = document.getElementById('target').value;
+        ua.sendMessage(dest, "Chào từ mesSIP!");
+        alert("Đã gửi tin nhắn!");
+    }
+</script>
