@@ -2,195 +2,84 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Android 10 Simulation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trình Soạn Thảo Của Khánh</title>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root {
+            --primary: #2196F3;
+            --bg: #f5f5f5;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         
-        body, html { 
-            margin: 0; padding: 0; height: 100%; width: 100%; 
-            background-color: #000; overflow: hidden;
-            font-family: 'Segoe UI', Roboto, sans-serif;
+        /* Thanh công cụ */
+        .toolbar {
+            background: white; padding: 10px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 8px;
+            position: sticky; top: 10px; z-index: 10;
         }
 
-        /* Hình nền toàn màn hình */
-        .wallpaper {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2070') center/cover;
-            z-index: 1;
+        button, select, input[type="color"] {
+            padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px;
+            background: white; cursor: pointer; font-weight: bold;
         }
 
-        /* Lớp phủ hệ điều hành */
-        .os-container {
-            position: relative; z-index: 2; height: 100%; width: 100%;
-            display: flex; flex-direction: column;
+        button:hover { background: #eee; }
+        .btn-save { background: var(--primary); color: white; border: none; }
+        .btn-save:hover { background: #1976D2; }
+
+        /* Vùng nhập liệu */
+        #editor {
+            width: 100%; max-width: 800px; min-height: 400px;
+            background: white; padding: 30px; border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            outline: none; line-height: 1.6; font-size: 16px;
         }
-
-        /* Thanh trạng thái */
-        .status-bar {
-            height: 44px; padding: 0 20px; display: flex;
-            justify-content: space-between; align-items: center;
-            color: white; font-size: 14px; font-weight: 600;
-        }
-
-        /* Đồng hồ lớn */
-        .home-screen {
-            flex-grow: 1; display: flex; flex-direction: column; align-items: center;
-            padding-top: 60px;
-        }
-
-        .big-clock {
-            color: white; font-size: 72px; font-weight: 300;
-            text-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        /* Lưới ứng dụng */
-        .app-drawer {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 20px; padding: 30px; width: 100%;
-        }
-
-        .app-icon-wrapper {
-            display: flex; flex-direction: column; align-items: center; color: white;
-            font-size: 12px; cursor: pointer; text-decoration: none;
-        }
-
-        .icon {
-            width: 60px; height: 60px; border-radius: 16px; margin-bottom: 8px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: transform 0.1s;
-        }
-
-        .icon:active { transform: scale(0.9); }
-
-        /* Cửa sổ ứng dụng */
-        .app-window {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 100; visibility: hidden;
-            transform: translateY(100%); transition: 0.4s cubic-bezier(0, 0, 0.2, 1);
-        }
-
-        .app-window.active { visibility: visible; transform: translateY(0); }
-
-        .app-toolbar {
-            height: 60px; background: #f8f9fa; display: flex; 
-            align-items: center; padding: 0 15px; border-bottom: 1px solid #eee;
-        }
-
-        .close-btn { font-size: 24px; cursor: pointer; padding: 10px; }
-
-        /* Thanh điều hướng Android 10 */
-        .nav-gesture {
-            height: 25px; width: 100%; display: flex; justify-content: center; align-items: center;
-            position: absolute; bottom: 0;
-        }
-
-        .pill { width: 100px; height: 4px; background: white; border-radius: 2px; opacity: 0.7; }
     </style>
 </head>
 <body>
 
-    <div class="wallpaper"></div>
+    <div class="toolbar">
+        <button onclick="execCmd('bold')">B</button>
+        <button onclick="execCmd('italic')">I</button>
+        <button onclick="execCmd('underline')">U</button>
+        
+        <select onchange="execCmd('fontSize', this.value)">
+            <option value="3">Cỡ vừa</option>
+            <option value="1">Nhỏ</option>
+            <option value="5">Lớn</option>
+            <option value="7">Rất lớn</option>
+        </select>
 
-    <div class="os-container">
-        <div class="status-bar">
-            <span id="time">12:00</span>
-            <span>LTE  🔋 85%</span>
-        </div>
+        <input type="color" onchange="execCmd('foreColor', this.value)" title="Màu chữ">
 
-        <div class="home-screen">
-            <div class="big-clock" id="clock-display">12:00</div>
-            
-            <div class="app-drawer">
-                <div class="app-icon-wrapper" onclick="openApp('Google', 'https://www.google.com/search?igu=1')">
-                    <div class="icon" style="background: white;">🔍</div>
-                    <span>Google</span>
-                </div>
-                <div class="app-icon-wrapper" onclick="openApp('Thời tiết', 'Dự báo: Trời hôm nay rất đẹp để code!')">
-                    <div class="icon" style="background: #4FC3F7;">☀️</div>
-                    <span>Thời tiết</span>
-                </div>
-                <div class="app-icon-wrapper" onclick="openApp('Máy tính', 'Chức năng đang phát triển...')">
-                    <div class="icon" style="background: #FF7043;">➕</div>
-                    <span>Máy tính</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="nav-gesture" onclick="closeApp()">
-            <div class="pill"></div>
-        </div>
+        <button class="btn-save" onclick="downloadFile()">💾 Tải về .txt</button>
     </div>
 
-    <div id="app-window" class="app-window">
-        <div class="app-toolbar">
-            <span class="close-btn" onclick="closeApp()">✕</span>
-            <strong id="app-name" style="margin-left: 10px;">App</strong>
-        </div>
-        <div id="app-content" style="height: calc(100% - 60px); width: 100%; overflow: auto; padding: 15px;">
-            </div>
-        <div class="nav-gesture" onclick="closeApp()" style="background: white;">
-            <div class="pill" style="background: #333;"></div>
-        </div>
+    <div id="editor" contenteditable="true">
+        Chào Khánh! Hãy xóa dòng này và bắt đầu viết nội dung của bạn tại đây...
     </div>
 
     <script>
-        function updateClock() {
-            const now = new Date();
-            const t = now.getHours().toString().padStart(2, '0') + ":" + 
-                      now.getMinutes().toString().padStart(2, '0');
-            document.getElementById('time').innerText = t;
-            document.getElementById('clock-display').innerText = t;
+        // Hàm thực hiện các lệnh chỉnh sửa
+        function execCmd(command, value = null) {
+            document.execCommand(command, false, value);
         }
 
-        function openApp(name, content) {
-            const win = document.getElementById('app-window');
-            document.getElementById('app-name').innerText = name;
+        // Hàm tải file về máy
+        function downloadFile() {
+            const text = document.getElementById('editor').innerText; // Lấy chữ thuần túy
+            const blob = new Blob([text], { type: 'text/plain' });
+            const anchor = document.createElement('a');
             
-            if(content.includes('http')) {
-                document.getElementById('app-content').innerHTML = `<iframe src="${content}" style="width:100%; height:100%; border:none;"></iframe>`;
-            } else {
-                document.getElementById('app-content').innerHTML = `<h2>${content}</h2>`;
-            }
-            
-            win.classList.add('active');
+            anchor.download = 'noidung_cua_khanh.txt';
+            anchor.href = window.URL.createObjectURL(blob);
+            anchor.target = '_blank';
+            anchor.style.display = 'none';
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
         }
-
-        function closeApp() {
-            document.getElementById('app-window').classList.remove('active');
-        }
-
-        setInterval(updateClock, 1000);
-        updateClock();
     </script>
-</body>
-</html>        }
-        var user = document.getElementById('sip_user').value;
-        var pass = document.getElementById('sip_pass').value;
-        var socket = new JsSIP.WebSocketInterface('wss://sip.linphone.org:4443');
-        var config = {
-            sockets: [ socket ],
-            uri: 'sip:' + user + '@sip.linphone.org',
-            password: pass
-        };
-        ua = new JsSIP.UA(config);
-        ua.start();
-        ua.on('registered', () => {
-            document.getElementById('status').innerText = "ONLINE ✅";
-            document.getElementById('status').style.color = "#34a853";
-        });
-        ua.on('registrationFailed', (e) => {
-            document.getElementById('status').innerText = "LỖI: " + e.cause;
-        });
-    }
-
-    function callAudio() {
-        if (!ua || !ua.isRegistered()) { alert("Chưa Online!"); return; }
-        var dest = document.getElementById('target').value;
-        ua.call(dest, { mediaConstraints: { audio: true, video: false } });
-    }
-</script>
-
 </body>
 </html>
